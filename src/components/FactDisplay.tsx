@@ -27,12 +27,11 @@ function getNewSentence(base: string): Promise<string> {
 
   return response.then((response) => {
     if (!response.ok) {
-      response.text().then((text) => {
+      return response.text().then(() => {
         throw new Error(
           "Could not connect to Peerwave. Make sure you have enabled third party cookies and you've authenticated with Peerwave."
         );
       });
-      return;
     }
 
     return response.json().then((json) => {
@@ -48,7 +47,7 @@ function getExistingSentences(): Promise<string[]> {
 
   return response.then((response) => {
     if (!response.ok) {
-      response.text().then((text) => {
+      response.text().then(() => {
         throw new Error("Facts couldn't be fetched! Please reload the page");
       });
       return;
@@ -117,8 +116,8 @@ export const FactDisplay = () => {
         <Button processing={processing} onClick={() => handleRiff()}>
           Riff
         </Button>
-        <Button onClick={() => setIndex(index - 1)}>False</Button>
         <Button onClick={() => setIndex(index + 1)}>True</Button>
+        <Button onClick={() => setIndex(index - 1)}>False</Button>
       </Stack>
       <div className="gap-medium" />
       <Stack gap="medium" direction="column">

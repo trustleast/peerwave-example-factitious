@@ -7,12 +7,16 @@ import { Stack } from "./Stack";
 
 const factBase = "Generate a random fact like this:";
 
-function getNewSentence(base: string): Promise<string> {
-  const response = fetch("https://api.peerwave.ai/api/chat", {
+async function getNewSentence(base: string): Promise<string> {
+  const credentials =
+    new URLSearchParams(location.hash.substring(1)).get("token") || "";
+
+  const response = await fetch("https://api.peerwave.ai/api/chat", {
     method: "POST",
-    credentials: "include",
     headers: {
       "Content-Type": "application/json",
+      Redirect: "/",
+      Authorization: credentials,
     },
     body: JSON.stringify({
       model: "cheapest",
@@ -25,19 +29,18 @@ function getNewSentence(base: string): Promise<string> {
     }),
   });
 
-  return response.then((response) => {
-    if (!response.ok) {
-      return response.text().then(() => {
-        throw new Error(
-          "Could not connect to Peerwave. Make sure you have enabled third party cookies and you've authenticated with Peerwave."
-        );
-      });
+  if (!response.ok) {
+    const location = response.headers.get("Location");
+    if (response.status === 401 && location) {
+      console.log("Redirecting to", location);
+      window.location.href = location;
     }
+    const text = await response.text();
+    throw new Error("Couldn't make a new fact: " + text);
+  }
 
-    return response.json().then((json) => {
-      return json.message.content;
-    });
-  });
+  const json = await response.json();
+  return json.message.content;
 }
 
 function getExistingSentences(): Promise<string[]> {

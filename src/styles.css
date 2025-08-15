@@ -96,17 +96,18 @@ body {
   background: #81e6d9;
 }
 
-.fact-item:first-child.riff-fact::after {
-  height: calc(50% + 12px);
-  top: 50%;
-}
-
-.fact-item:last-child.riff-fact::after {
-  height: calc(50% + 12px);
-}
-
 .fact-item:only-child.riff-fact::after {
-  display: none;
+  height: calc(50% + 32px);
+  top: -32px;
+}
+
+.fact-item:first-child.riff-fact:not(:only-child)::after {
+  height: calc(100% + 44px);
+  top: -32px;
+}
+
+.fact-item:last-child.riff-fact:not(:only-child)::after {
+  height: calc(50% + 12px);
 }
 
 .fact-item.riff-fact:not(:first-child):not(:last-child)::after {
@@ -117,6 +118,11 @@ body {
   margin: 0;
   font-size: 16px;
   line-height: 1.5;
+}
+
+.input-container {
+  position: relative;
+  margin-bottom: 20px;
 }
 
 .fact-input {
@@ -131,21 +137,21 @@ body {
   font-family: inherit;
 }
 
+.input-connector {
+  position: absolute;
+  left: 20px;
+  bottom: -20px;
+  width: 2px;
+  height: 20px;
+  background: #81e6d9;
+}
+
 .fact-input:focus {
   outline: none;
   border-color: #81e6d9;
   box-shadow: 0 0 0 3px rgba(129, 230, 217, 0.2);
 }
 
-.fact-input.has-riffs::after {
-  content: "";
-  position: absolute;
-  left: 20px;
-  bottom: -30px;
-  width: 2px;
-  height: 32px;
-  background: #81e6d9;
-}
 
 .riff-button {
   background: linear-gradient(135deg, #38b2ac 0%, #319795 100%);

@@ -75,14 +75,17 @@ export const FactDisplay = () => {
       {error !== "" && <div className="error-message">{error}</div>}
 
       {/* <div className={`input-group ${riffs.length > 0 ? "has-riffs" : ""}`} /> */}
-      <input
-        id="baseFact"
-        type="text"
-        value={editableFact}
-        onChange={(e) => setEditableFact(e.target.value)}
-        className={`fact-input ${riffs.length > 0 ? "has-riffs" : ""}`}
-        placeholder="Enter your base fact here..."
-      />
+      <div className="input-container">
+        <input
+          id="baseFact"
+          type="text"
+          value={editableFact}
+          onChange={(e) => setEditableFact(e.target.value)}
+          className="fact-input"
+          placeholder="Enter your base fact here..."
+        />
+        {riffs.length > 0 && <div className="input-connector"></div>}
+      </div>
 
       <div className="fact-chain">
         {riffs.map((riff) => (

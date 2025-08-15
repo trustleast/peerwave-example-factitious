@@ -1,15 +1,11 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { Button } from "./Button";
-import { TextContent } from "./TextContent";
-import { Stack } from "./Stack";
+import React, { useState } from "react";
 
 const factBase = "Generate a random fact like this:";
+const baseFact = "Koalas are mammals";
 
 async function getNewSentence(base: string): Promise<string> {
   const credentials =
-    new URLSearchParams(location.hash.substring(1)).get("token") || "";
+    new URLSearchParams(window.location.hash.substring(1)).get("token") || "";
 
   const response = await fetch("https://api.peerwave.ai/api/chat", {
     method: "POST",
@@ -30,10 +26,10 @@ async function getNewSentence(base: string): Promise<string> {
   });
 
   if (!response.ok) {
-    const location = response.headers.get("Location");
-    if (response.status === 401 && location) {
-      console.log("Redirecting to", location);
-      window.location.href = location;
+    const redirect = response.headers.get("Location");
+    if (response.status === 402 && redirect) {
+      console.log("Redirecting to", redirect);
+      window.location.href = redirect;
     }
     const text = await response.text();
     throw new Error("Couldn't make a new fact: " + text);
@@ -43,91 +39,54 @@ async function getNewSentence(base: string): Promise<string> {
   return json.message.content;
 }
 
-function getExistingSentences(): Promise<string[]> {
-  const response = fetch("https://dreg2dzhpct39.cloudfront.net/science.json", {
-    method: "GET",
-  });
-
-  return response.then((response) => {
-    if (!response.ok) {
-      response.text().then(() => {
-        throw new Error("Facts couldn't be fetched! Please reload the page");
-      });
-      return;
-    }
-
-    return response.json();
-  });
-}
-
 export const FactDisplay = () => {
-  const [sentences, setSentences] = useState<string[]>([]);
-  const [index, setIndex] = useState<number>(0);
   const [error, setError] = useState<string>("");
-  const [riffs, setRiffs] = useState<Record<number, string[]>>({});
-  const [processing, setProcessing] = useState<boolean>(false);
+  const [riffs, setRiffs] = useState<string[]>([]);
+  const [editableFact, setEditableFact] = useState<string>(baseFact);
 
-  useEffect(() => {
-    getExistingSentences()
-      .then((sentences) => {
-        setSentences(sentences.map(cleanSentence));
-        setError("");
-      })
-      .catch((error) => {
-        setError(error.message);
-      });
-  }, []);
-
-  const handleRiff = () => {
-    setProcessing(true);
-    const sentence = selectSentence(sentences, index);
-    const elementRiffs = riffs[index] || [];
-    const base = elementRiffs[elementRiffs.length - 1] || sentence;
-
-    getNewSentence(base)
-      .then((sentence) => {
-        const clean = cleanSentence(sentence);
+  const handleRiff = (riff: string) => {
+    getNewSentence(riff)
+      .then((newSentence) => {
+        const clean = cleanSentence(newSentence);
         setRiffs((old) => {
-          const clone = JSON.parse(JSON.stringify(old));
-          const elementRiffs = clone[index] || [];
-          elementRiffs.push(clean);
-          clone[index] = elementRiffs;
-
-          return clone;
+          return [...old, clean];
         });
         setError("");
       })
-      .catch((error) => {
-        setError(error.message);
-      })
-      .finally(() => {
-        setProcessing(false);
+      .catch((newError) => {
+        setError(newError.message);
       });
   };
 
   return (
     <>
-      {error !== "" && <TextContent color="red">{error}</TextContent>}
-      <TextContent>{selectSentence(sentences, index)}</TextContent>
+      {error !== "" && <p style={{ color: "red" }}>{error}</p>}
+      <div>
+        <label htmlFor="baseFact">Base Fact:</label>
+        <input
+          id="baseFact"
+          type="text"
+          value={editableFact}
+          onChange={(e) => setEditableFact(e.target.value)}
+          style={{ width: "100%", marginBottom: "10px", padding: "5px" }}
+        />
+      </div>
+      <p>{editableFact}</p>
       <div className="gap-medium" />
-      <Stack
-        direction="row"
-        alignItems="center"
-        gap="medium"
-        justifyContent="center"
+
+      <button
+        onClick={() =>
+          handleRiff(riffs.length > 0 ? riffs[riffs.length - 1] : editableFact)
+        }
       >
-        <Button processing={processing} onClick={() => handleRiff()}>
-          Riff
-        </Button>
-        <Button onClick={() => setIndex(index + 1)}>True</Button>
-        <Button onClick={() => setIndex(index - 1)}>False</Button>
-      </Stack>
+        Riff
+      </button>
       <div className="gap-medium" />
-      <Stack gap="medium" direction="column">
-        {(riffs[index] || []).map((riff) => {
-          return <TextContent key={riff}>{riff}</TextContent>;
+      <div>
+        {riffs.map((riff) => {
+          return <p key={riff}>{riff}</p>;
         })}
-      </Stack>
+      </div>
     </>
   );
 };
@@ -137,8 +96,4 @@ function cleanSentence(sentence: string): string {
     return sentence.split(":", 2)[1];
   }
   return sentence.trim();
-}
-
-function selectSentence(sentences: string[], index: number): string {
-  return sentences[index % sentences.length];
 }

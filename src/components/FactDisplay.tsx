@@ -29,6 +29,7 @@ async function getNewSentence(base: string): Promise<string> {
     const redirect = response.headers.get("Location");
     if (response.status === 402 && redirect) {
       window.location.href = redirect;
+      return "";
     }
     const text = await response.text();
     throw new Error("Couldn't make a new fact: " + text);
@@ -56,6 +57,9 @@ export const FactDisplay = () => {
     setIsLoading(true);
     getNewSentence(riff)
       .then((newSentence) => {
+        if (newSentence === "") {
+          return;
+        }
         const clean = cleanSentence(newSentence);
         setRiffs((old) => {
           return [...old, clean];
@@ -74,7 +78,6 @@ export const FactDisplay = () => {
     <>
       {error !== "" && <div className="error-message">{error}</div>}
 
-      {/* <div className={`input-group ${riffs.length > 0 ? "has-riffs" : ""}`} /> */}
       <div className="input-container">
         <input
           id="baseFact"

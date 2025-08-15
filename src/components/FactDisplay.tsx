@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 const factBase = "Generate a random fact like this:";
 const baseFact = "Koalas are mammals";
@@ -28,7 +28,6 @@ async function getNewSentence(base: string): Promise<string> {
   if (!response.ok) {
     const redirect = response.headers.get("Location");
     if (response.status === 402 && redirect) {
-      console.log("Redirecting to", redirect);
       window.location.href = redirect;
     }
     const text = await response.text();
@@ -43,8 +42,18 @@ export const FactDisplay = () => {
   const [error, setError] = useState<string>("");
   const [riffs, setRiffs] = useState<string[]>([]);
   const [editableFact, setEditableFact] = useState<string>(baseFact);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [previousFact, setPreviousFact] = useState<string>(baseFact);
+
+  useEffect(() => {
+    if (editableFact !== previousFact) {
+      setRiffs([]);
+      setPreviousFact(editableFact);
+    }
+  }, [editableFact, previousFact]);
 
   const handleRiff = (riff: string) => {
+    setIsLoading(true);
     getNewSentence(riff)
       .then((newSentence) => {
         const clean = cleanSentence(newSentence);
@@ -55,38 +64,43 @@ export const FactDisplay = () => {
       })
       .catch((newError) => {
         setError(newError.message);
+      })
+      .finally(() => {
+        setIsLoading(false);
       });
   };
 
   return (
     <>
-      {error !== "" && <p style={{ color: "red" }}>{error}</p>}
-      <div>
-        <label htmlFor="baseFact">Base Fact:</label>
-        <input
-          id="baseFact"
-          type="text"
-          value={editableFact}
-          onChange={(e) => setEditableFact(e.target.value)}
-          style={{ width: "100%", marginBottom: "10px", padding: "5px" }}
-        />
+      {error !== "" && <div className="error-message">{error}</div>}
+
+      {/* <div className={`input-group ${riffs.length > 0 ? "has-riffs" : ""}`} /> */}
+      <input
+        id="baseFact"
+        type="text"
+        value={editableFact}
+        onChange={(e) => setEditableFact(e.target.value)}
+        className={`fact-input ${riffs.length > 0 ? "has-riffs" : ""}`}
+        placeholder="Enter your base fact here..."
+      />
+
+      <div className="fact-chain">
+        {riffs.map((riff) => (
+          <div key={riff} className="fact-item riff-fact">
+            <p className="fact-text">{riff}</p>
+          </div>
+        ))}
       </div>
-      <p>{editableFact}</p>
-      <div className="gap-medium" />
 
       <button
+        className="riff-button"
         onClick={() =>
           handleRiff(riffs.length > 0 ? riffs[riffs.length - 1] : editableFact)
         }
+        disabled={isLoading}
       >
-        Riff
+        {isLoading ? "Generating..." : "Riff"}
       </button>
-      <div className="gap-medium" />
-      <div>
-        {riffs.map((riff) => {
-          return <p key={riff}>{riff}</p>;
-        })}
-      </div>
     </>
   );
 };

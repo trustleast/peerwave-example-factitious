@@ -27,7 +27,7 @@ async function getNewSentence(base: string): Promise<string> {
 
   if (!response.ok) {
     const redirect = response.headers.get("Location");
-    if (response.status === 402 && redirect) {
+    if (redirect) {
       window.location.href = redirect;
       return "";
     }
